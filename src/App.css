@@ -148,12 +148,88 @@ body {
   cursor: not-allowed;
 }
 
-.song-card, .song-card-dragged-to { 
-  display:flex;
+/* SONG CARDS — HW1 look */
+.song-card,
+.selected-song-card,
+.unselected-song-card {
+  display: flex;
   align-items: center;
-  font-size: 24pt;
-  height:20%;
+  justify-content: space-between;   /* left text + right trash */
+  gap: 12px;
+  margin: 12px 18px;                /* separation between cards */
+  padding: 12px 18px;
+  border-radius: 125px;             /* pill */
+  background-color: var(--swatch-complement);
+  transition: background-color 120ms ease, color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
 }
+
+.song-card:hover,
+.unselected-song-card:hover {
+  cursor: pointer;
+  background-color: var(--swatch-contrast); /* black */
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Drag feedback */
+.song-card-dragged-to,
+.is-dragging {
+  border: 2px solid black;
+  opacity: 0.5;
+}
+
+/* Index badge (left) */
+.song-index {
+  min-width: 36px;
+  height: 36px;
+  line-height: 36px;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: bold;
+  padding: 0 10px;
+  background: var(--swatch-primary);
+  color: #333;
+}
+
+/* Song text (ellipsis if long) */
+.song-main {
+  flex: 1;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Trash button (right) */
+.song-trash {
+  border: none;
+  border-radius: 999px;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.song-card:hover .song-trash { background: #f5f5f5; }
+
+/* HW1 background for song area */
+#song-cards { background-color: var(--swatch-accent); }
+/* Drag SOURCE: the one you're dragging */
+.song-drag-source {
+  opacity: 0.5;
+  border: 2px solid black;
+}
+
+/* Drag TARGET: the card you're hovering over; make it black like HW1 hover */
+.song-drag-target {
+  background-color: var(--swatch-contrast);
+  color: white;
+  border: 2px dashed black;
+  opacity: 1; /* ensure not dimmed */
+}
+
 
 input {
   font-size:20pt;

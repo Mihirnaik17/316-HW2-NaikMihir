@@ -7,29 +7,30 @@ export default class DeleteListModal extends Component {
         if (listKeyPair) {
             name = listKeyPair.name;
         }
+        //it was "class=" instead of "className=" , and thats the reason a few components did not apply my css style 
         return (
             <div 
-                class="modal" 
+                className="modal" 
                 id="delete-list-modal" 
                 data-animation="slideInOutLeft">
-                    <div class="modal-root" id='verify-delete-list-root'>
-                        <div class="modal-north">
+                    <div className="modal-root" id='verify-delete-list-root'>
+                        <div className="modal-north">
                             Delete playlist?
                         </div>
-                        <div class="modal-center">
-                            <div class="modal-center-content">
+                        <div className="modal-center">
+                            <div className="modal-center-content">
                                 Are you sure you wish to permanently delete the {name} playlist?
                             </div>
                         </div>
-                        <div class="modal-south">
+                        <div className="modal-south">
                             <input type="button" 
                                 id="delete-list-confirm-button" 
-                                class="modal-button" 
+                                className="modal-button" 
                                 onClick={deleteListCallback}
                                 value='Confirm' />
                             <input type="button" 
                                 id="delete-list-cancel-button" 
-                                class="modal-button" 
+                                className="modal-button" 
                                 onClick={hideDeleteListModalCallback}
                                 value='Cancel' />
                         </div>
