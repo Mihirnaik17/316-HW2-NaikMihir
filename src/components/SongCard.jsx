@@ -10,7 +10,7 @@ export default class SongCard extends React.Component {
         }
     }
     handleDragStart = (event) => {
-        event.dataTransfer.setData("song", event.target.id);
+        event.dataTransfer.setData("song", event.currentTarget.id);
         this.setState(prevState => ({
             isDragging: true,
             draggedTo: prevState.draggedTo
@@ -40,7 +40,7 @@ export default class SongCard extends React.Component {
     handleDrop = (event) => {
         event.preventDefault();
         let target = event.target;
-        let targetId = target.id;
+        let targetId = event.currentTarget.id;
         targetId = targetId.substring(target.id.indexOf("-") + 1);
         let sourceId = event.dataTransfer.getData("song");
         sourceId = sourceId.substring(sourceId.indexOf("-") + 1);
@@ -68,7 +68,7 @@ export default class SongCard extends React.Component {
         }
         return (
             <div
-                id={'song-' + num}
+                id={'song-card-' + num}
                 className={itemClass}
                 onDragStart={this.handleDragStart}
                 onDragOver={this.handleDragOver}

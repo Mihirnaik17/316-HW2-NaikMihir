@@ -17,7 +17,7 @@ body {
   background-color: var(--swatch-foundation);
 }
 
-#root {
+#root, #app {
   background-color: var(--swatch-primary);
   font-family: serif;
   position: absolute;
