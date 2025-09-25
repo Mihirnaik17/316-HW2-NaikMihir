@@ -13,8 +13,8 @@
   --bounceEasing: cubic-bezier(0.51, 0.92, 0.24, 1.15);
 }
 
-body {
-  background-color: var(--swatch-foundation);
+body, #app {
+  font-family: "Rubik", "Helvetica Neue", Arial, system-ui, -apple-system, sans-serif;
 }
 
 #root, #app {

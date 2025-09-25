@@ -72,8 +72,20 @@ export default class SongCard extends React.Component {
       >
         <span className="song-index">{num}.</span>
         <span className="song-main">
-          {song.title} <i>by</i> {song.artist}
+        <a
+            href={`https://www.youtube.com/watch?v=${song.youTubeId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onMouseDown={(e) => e.stopPropagation()}  // don’t start drag on click
+            draggable={false}
+            className="song-title"
+        >
+        {song.title}
+        </a>
+            {song.year ? <span className="song-year"> ({song.year})</span> : null}
+             &nbsp;<i>by</i>&nbsp;<span className="song-artist">{song.artist}</span>
         </span>
+
         <button
           className="song-trash"
           aria-label={`Delete ${song.title}`}
