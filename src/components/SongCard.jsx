@@ -47,6 +47,11 @@ export default class SongCard extends React.Component {
   handleDragEnd = () => {
     this.setState({ isDragSource: false, isDragTarget: false });
   };
+  handleDoubleClick = (e) => {
+    e.stopPropagation(); // avoid colliding with drag
+    const num = Number(this.getItemNum()); // 1-based
+    this.props.openEditSongCallback?.(num);
+  };
 
   getItemNum = () => this.props.id.substring("song-card-".length);
 
@@ -69,11 +74,12 @@ export default class SongCard extends React.Component {
         onDragLeave={this.handleDragLeave}
         onDrop={this.handleDrop}
         onDragEnd={this.handleDragEnd}
+        onDoubleClick={this.handleDoubleClick}
       >
         <span className="song-index">{num}.</span>
         <span className="song-main">
         <a
-            href={`https://www.youtube.com/watch?v=${song.youTubeId}`}
+            href={song.youTubeId ? `https://www.youtube.com/watch?v=${song.youTubeId}` : "#"}
             target="_blank"
             rel="noopener noreferrer"
             onMouseDown={(e) => e.stopPropagation()}  // don’t start drag on click
@@ -90,9 +96,9 @@ export default class SongCard extends React.Component {
           className="song-trash"
           aria-label={`Delete ${song.title}`}
           onMouseDown={(e) => { /* avoid starting a drag */ e.stopPropagation(); }}
-          onClick={(e) => { e.stopPropagation(); deleteSongCallback(Number(num)); }}
+          onClick={(e) => { e.stopPropagation(); deleteSongCallback?.(Number(num)); }}
         >
-          🗑️
+          🗑
         </button>
       </div>
     );

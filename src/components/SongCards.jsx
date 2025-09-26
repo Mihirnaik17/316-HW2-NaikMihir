@@ -3,7 +3,7 @@ import SongCard from "./SongCard.jsx";
 
 export default class SongCards extends React.Component {
   render() {
-    const { currentList, moveSongCallback, deleteSongCallback } = this.props;
+    const { currentList, moveSongCallback, deleteSongCallback, openEditSongCallback } = this.props;
     if (currentList === null) return <div id="song-cards"></div>;
     return (
       <div id="song-cards">
@@ -14,6 +14,7 @@ export default class SongCards extends React.Component {
             song={song}
             moveCallback={moveSongCallback}
             deleteSongCallback={deleteSongCallback}
+            openEditSongCallback={openEditSongCallback}
           />
         ))}
       </div>

@@ -219,6 +219,16 @@ input, button, select, textarea { font-family: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.song-main a {
+  text-decoration: none;
+  color: inherit;          /* flips to white when card turns black */
+}
+.song-main a:hover {
+  text-decoration: underline;
+}
+.song-year { font-style: italic; margin-left: 2px; }
+.song-artist { font-style: italic; }
+
 
 /* Trash button (right) */
 .song-trash {

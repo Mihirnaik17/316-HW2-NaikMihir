@@ -20,6 +20,9 @@ import SidebarList from './components/PlaylistCards.jsx';
 import SongCards from './components/SongCards.jsx';
 import Statusbar from './components/Statusbar.jsx';
 
+import EditSongModal from './components/EditSongModal.jsx';
+import EditSong_Transaction from './transactions/EditSong_Transaction.js';
+
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -32,12 +35,14 @@ class App extends React.Component {
 
     // GET THE SESSION DATA FROM OUR DATA MANAGER
     let loadedSessionData = this.db.queryGetSessionData();
+    
 
     // SETUP THE INITIAL STATE
     this.state = {
       listKeyPairMarkedForDeletion: null,
       currentList: null,
       sessionData: loadedSessionData,
+      editSongIndex: null,
     };
   }
 
@@ -291,6 +296,18 @@ class App extends React.Component {
     let modal = document.getElementById('delete-list-modal');
     modal.classList.remove('is-visible');
   }
+  openEditSongModal = (oneBasedIndex) => {
+  this.setState({ editSongIndex: Number(oneBasedIndex) }, () => {
+    const modal = document.getElementById('edit-song-modal');
+    if (modal) modal.classList.add('is-visible');
+  });
+};
+
+closeEditSongModal = () => {
+  const modal = document.getElementById('edit-song-modal');
+  if (modal) modal.classList.remove('is-visible');
+  this.setState({ editSongIndex: null });
+};
 
   render() {
     let canAddSong = this.state.currentList !== null;
@@ -322,6 +339,7 @@ class App extends React.Component {
           currentList={this.state.currentList}
           moveSongCallback={this.addMoveSongTransaction}
           deleteSongCallback={this.addDeleteSongTransaction}
+          openEditSongCallback={this.openEditSongModal}
         />
         <Statusbar currentList={this.state.currentList} />
         <DeleteListModal
@@ -329,6 +347,18 @@ class App extends React.Component {
           hideDeleteListModalCallback={this.hideDeleteListModal}
           deleteListCallback={this.deleteMarkedList}
         />
+        <EditSongModal
+  song={
+    this.state.editSongIndex
+      ? this.state.currentList?.songs[this.state.editSongIndex - 1]
+      : null
+  }
+  onConfirm={(fields) =>
+    this.addEditSongTransaction(this.state.editSongIndex, fields)
+  }
+  onCancel={this.closeEditSongModal}
+/>
+
       </div>
     );
   }
