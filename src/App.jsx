@@ -23,6 +23,8 @@ import SidebarHeading from './components/SidebarHeading.jsx';
 import SidebarList from './components/PlaylistCards.jsx';
 import SongCards from './components/SongCards.jsx';
 import Statusbar from './components/Statusbar.jsx';
+import AddSong_Transaction from './transactions/AddSong_Transaction';
+
 
 class App extends React.Component {
   constructor(props) {
@@ -329,6 +331,12 @@ class App extends React.Component {
     this.tps.processTransaction(t);
   };
 
+  addAddSongTransaction = () => {
+  const t = new AddSong_Transaction(this);
+  this.tps.processTransaction(t);
+};
+
+
   // --- DUPLICATE SONG (deep copy) + TRANSACTION ---
   duplicateSong = (sourceOneBasedIndex, insertOneBasedIndex) => {
     const src = Number(sourceOneBasedIndex) - 1;
@@ -346,6 +354,25 @@ class App extends React.Component {
     const newList = { ...currentList, songs: newSongs };
     this.setStateWithUpdatedList(newList);
   };
+
+  addNewSong = () => {
+  const { currentList } = this.state;
+  if (!currentList) return null;
+
+  const defaultSong = {
+    title: "Untitled",
+    artist: "Unknown",
+    youTubeId: "dQw4w9WgXcQ"
+  };
+
+  const newSongs = [...currentList.songs, defaultSong];
+  const newList = { ...currentList, songs: newSongs };
+  this.setStateWithUpdatedList(newList);
+
+  // Return 1-based index for the transaction to undo
+  return newSongs.length;
+};
+
 
   addDuplicateSongTransaction = (oneBasedIndex) => {
     const t = new DuplicateSong_Transaction(this, oneBasedIndex);
@@ -479,6 +506,7 @@ class App extends React.Component {
           undoCallback={this.undo}
           redoCallback={this.redo}
           closeCallback={this.closeCurrentList}
+          addSongCallback={this.addAddSongTransaction}
         />
         <SongCards
           currentList={this.state.currentList}
