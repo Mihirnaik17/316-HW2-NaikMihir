@@ -6,19 +6,17 @@ export default class DuplicateList_Transaction {
     this.newListId = null;            // id of the newly created list
   }
 
-  // jsTPS will call this
   executeDo() {
     this.newListId = this.app.duplicatePlaylist(this.sourceListId);
   }
 
-  // jsTPS will call this on undo
   executeUndo() {
     if (this.newListId != null) {
       this.app.deletePlaylistById(this.newListId);
     }
   }
 
-  // Optional fallback for older code using doTransaction/undoTransaction
+  
   doTransaction() {
     this.executeDo();
   }

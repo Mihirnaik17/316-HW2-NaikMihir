@@ -5,7 +5,6 @@ export default class DeleteSong_Transaction {
     this.removed = null;
   }
 
-  // jsTPS expects these methods:
   executeDo() {
     this.removed = this.app.deleteSong(this.index);
   }
@@ -16,7 +15,6 @@ export default class DeleteSong_Transaction {
     }
   }
 
-  // Optional legacy support (if jsTPS uses these too)
   doTransaction() {
     this.executeDo();
   }

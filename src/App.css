@@ -229,6 +229,17 @@ input, button, select, textarea { font-family: inherit; }
 .song-year { font-style: italic; margin-left: 2px; }
 .song-artist { font-style: italic; }
 
+.song-title {
+  color: #1e90ff; /* Dodger Blue */
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.song-title:hover {
+  text-decoration: underline;
+}
+
+
 
 /* Trash button (right) */
 .song-trash {

@@ -53,7 +53,6 @@ export default class EditSongModal extends Component {
   };
 
   render() {
-    // Keep the same modal shell & classes as DeleteListModal for visual consistency.
     return (
       <div
         className="modal"
