@@ -279,6 +279,31 @@ class App extends React.Component {
     }
   };
 
+  componentDidMount() {
+  window.addEventListener("keydown", this.handleKeyDown);
+}
+
+componentWillUnmount() {
+  window.removeEventListener("keydown", this.handleKeyDown);
+}
+
+handleKeyDown = (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+    e.preventDefault();
+    if (this.tps.hasTransactionToUndo()) {
+      this.undo();
+    }
+  }
+
+  if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+    e.preventDefault();
+    if (this.tps.hasTransactionToDo()) {
+      this.redo();
+    }
+  }
+};
+
+
   markListForDeletion = (keyPair) => {
     this.setState(
       (prevState) => ({
