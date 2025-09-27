@@ -200,7 +200,7 @@ class App extends React.Component {
         sessionData: this.state.sessionData,
       }),
       () => {
-        this.db.mutationUpdateList(this.state.currentList);
+        this.db.mutationUpdateList(list);
       }
     );
   }
@@ -257,11 +257,13 @@ class App extends React.Component {
   };
 
   // Create + process the transaction, then close the modal
-  addEditSongTransaction = (oneBasedIndex, fields) => {
-    const t = new EditSong_Transaction(this, oneBasedIndex, fields);
-    this.tps.processTransaction(t);
-    this.closeEditSongModal();
-  };
+ addEditSongTransaction = (oneBasedIndex, fields) => {
+  console.log("🎯 Editing song at index:", oneBasedIndex, "with fields:", fields);
+  const t = new EditSong_Transaction(this, oneBasedIndex, fields);
+  this.tps.processTransaction(t);
+  this.closeEditSongModal();
+};
+
 
   // UNDO/REDO
   undo = () => {
@@ -338,22 +340,31 @@ class App extends React.Component {
 
 
   // --- DUPLICATE SONG (deep copy) + TRANSACTION ---
-  duplicateSong = (sourceOneBasedIndex, insertOneBasedIndex) => {
-    const src = Number(sourceOneBasedIndex) - 1;
-    const ins = Number(insertOneBasedIndex) - 1;
+ duplicateSong = (sourceOneBasedIndex, insertOneBasedIndex) => {
+  const src = Number(sourceOneBasedIndex) - 1;
+  const ins = Number(insertOneBasedIndex) - 1;
 
-    const { currentList } = this.state;
-    if (!currentList || src < 0 || src >= currentList.songs.length) return;
+  const { currentList } = this.state;
+  if (!currentList || src < 0 || src >= currentList.songs.length) return;
 
-    const copy = { ...currentList.songs[src] }; // fields are primitives; shallow spread is a deep copy here
-    const newSongs = [
-      ...currentList.songs.slice(0, ins),
-      copy,
-      ...currentList.songs.slice(ins),
-    ];
-    const newList = { ...currentList, songs: newSongs };
-    this.setStateWithUpdatedList(newList);
+  const original = currentList.songs[src];
+
+  // Make a deep copy and modify the title
+  const copy = {
+    ...original,
+    title: original.title + " (copy)"
   };
+
+  const newSongs = [
+    ...currentList.songs.slice(0, ins),
+    copy,
+    ...currentList.songs.slice(ins),
+  ];
+
+  const newList = { ...currentList, songs: newSongs };
+  this.setStateWithUpdatedList(newList);
+};
+
 
   addNewSong = () => {
   const { currentList } = this.state;

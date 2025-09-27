@@ -32,19 +32,20 @@ export default class EditSongModal extends Component {
   };
 
   handleConfirm = () => {
-    const { onConfirm } = this.props;
-    const { title, artist, year, youTubeId } = this.state;
+  const { onConfirm } = this.props;
+  const { title, artist, year, youTubeId } = this.state;
 
-    // Trim values; year left as-is if you want to allow blanks
-    const payload = {
-      title: String(title).trim(),
-      artist: String(artist).trim(),
-      year: String(year).trim() === "" ? "" : String(year).trim(),
-      youTubeId: String(youTubeId).trim(),
-    };
-
-    onConfirm && onConfirm(payload);
+  const payload = {
+    title: String(title).trim(),
+    artist: String(artist).trim(),
+    year: String(year).trim() === "" ? "" : String(year).trim(),
+    youTubeId: String(youTubeId).trim(),
   };
+
+  console.log("✅ Confirm clicked. Sending payload:", payload);
+  onConfirm && onConfirm(payload);
+};
+
 
   handleCancel = () => {
     const { onCancel } = this.props;
