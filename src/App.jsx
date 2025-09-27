@@ -8,9 +8,13 @@ import { jsTPS } from 'jstps';
 
 // OUR TRANSACTIONS
 import MoveSong_Transaction from './transactions/MoveSong_Transaction.js';
+import EditSong_Transaction from './transactions/EditSong_Transaction.js';
+import DuplicateSong_Transaction from './transactions/DuplicateSong_Transaction.js';
+import DuplicateList_Transaction from './transactions/DuplicateList_Transaction.js';
 
 // THESE REACT COMPONENTS ARE MODALS
 import DeleteListModal from './components/DeleteListModal.jsx';
+import EditSongModal from './components/EditSongModal.jsx';
 
 // THESE REACT COMPONENTS ARE IN OUR UI
 import Banner from './components/Banner.jsx';
@@ -19,9 +23,6 @@ import SidebarHeading from './components/SidebarHeading.jsx';
 import SidebarList from './components/PlaylistCards.jsx';
 import SongCards from './components/SongCards.jsx';
 import Statusbar from './components/Statusbar.jsx';
-
-import EditSongModal from './components/EditSongModal.jsx';
-import EditSong_Transaction from './transactions/EditSong_Transaction.js';
 
 class App extends React.Component {
   constructor(props) {
@@ -36,7 +37,6 @@ class App extends React.Component {
     // GET THE SESSION DATA FROM OUR DATA MANAGER
     let loadedSessionData = this.db.queryGetSessionData();
     
-
     // SETUP THE INITIAL STATE
     this.state = {
       listKeyPairMarkedForDeletion: null,
@@ -209,30 +209,56 @@ class App extends React.Component {
 
   // THIS FUNCTION MOVES A SONG IN THE CURRENT LIST
   moveSong(start, end) {
-    let list = this.state.currentList;
+    const list = this.state.currentList;
+    const s = Number(start) - 1;
+    const e = Number(end) - 1;
+    if (s === e) return;
 
-    start -= 1;
-    end -= 1;
-    if (start < end) {
-      let temp = list.songs[start];
-      for (let i = start; i < end; i++) {
-        list.songs[i] = list.songs[i + 1];
-      }
-      list.songs[end] = temp;
-    } else if (start > end) {
-      let temp = list.songs[start];
-      for (let i = start; i > end; i--) {
-        list.songs[i] = list.songs[i - 1];
-      }
-      list.songs[end] = temp;
-    }
-    this.setStateWithUpdatedList(list);
+    const newSongs = [...list.songs];
+    const [moved] = newSongs.splice(s, 1);
+    newSongs.splice(e, 0, moved);
+
+    const newList = { ...list, songs: newSongs };
+    this.setStateWithUpdatedList(newList);
   }
 
   // THIS FUNCTION ADDS A MoveSong_Transaction
   addMoveSongTransaction = (start, end) => {
     let transaction = new MoveSong_Transaction(this, start, end);
     this.tps.processTransaction(transaction);
+  };
+
+  // Apply the edit and return a snapshot of the old song (for undo)
+  editSong = (index, newFields) => {
+    const i = Number(index) - 1;
+    const { currentList } = this.state;
+    const oldSong = { ...currentList.songs[i] };
+
+    const updatedSong = { ...oldSong, ...newFields };
+    const newSongs = currentList.songs.map((s, idx) => (idx === i ? updatedSong : s));
+    const newList = { ...currentList, songs: newSongs };
+
+    this.setStateWithUpdatedList(newList);
+    return oldSong;
+  };
+
+  // Restore the previous snapshot (used by undo)
+  restoreSongFields = (oneBasedIndex, oldSong) => {
+    const i = Number(oneBasedIndex) - 1;
+    const { currentList } = this.state;
+    if (!currentList || !oldSong) return;
+
+    const newSongs = currentList.songs.map((s, idx) => (idx === i ? oldSong : s));
+    const newList = { ...currentList, songs: newSongs };
+
+    this.setStateWithUpdatedList(newList);
+  };
+
+  // Create + process the transaction, then close the modal
+  addEditSongTransaction = (oneBasedIndex, fields) => {
+    const t = new EditSong_Transaction(this, oneBasedIndex, fields);
+    this.tps.processTransaction(t);
+    this.closeEditSongModal();
   };
 
   // UNDO/REDO
@@ -265,25 +291,143 @@ class App extends React.Component {
   // Delete by 1-based index; return the removed song for undo
   deleteSong = (oneBasedIndex) => {
     const idx = Number(oneBasedIndex) - 1;
-    const list = this.state.currentList;
-    if (!list || idx < 0 || idx >= list.songs.length) return null;
-    const [removed] = list.songs.splice(idx, 1);
-    this.setStateWithUpdatedList(list);
+    const { currentList } = this.state;
+    if (!currentList || idx < 0 || idx >= currentList.songs.length) return null;
+
+    const removed = currentList.songs[idx];
+    const newSongs = [
+      ...currentList.songs.slice(0, idx),
+      ...currentList.songs.slice(idx + 1),
+    ];
+    const newList = { ...currentList, songs: newSongs };
+    this.setStateWithUpdatedList(newList);
+    console.log("🔥 Actually deleting song at index:", oneBasedIndex);
+
     return removed;
   };
 
   // Restore song at 1-based index (for undo)
   restoreSong = (oneBasedIndex, song) => {
     const idx = Number(oneBasedIndex) - 1;
-    const list = this.state.currentList;
-    if (!list || !song) return;
-    list.songs.splice(idx, 0, song);
-    this.setStateWithUpdatedList(list);
+    const { currentList } = this.state;
+    if (!currentList || !song) return;
+
+    const newSongs = [
+      ...currentList.songs.slice(0, idx),
+      song,
+      ...currentList.songs.slice(idx),
+    ];
+    const newList = { ...currentList, songs: newSongs };
+    this.setStateWithUpdatedList(newList);
   };
 
   // Transaction wrapper
   addDeleteSongTransaction = (oneBasedIndex) => {
     const t = new DeleteSong_Transaction(this, oneBasedIndex);
+    console.log("📦 Creating DeleteSong_Transaction for index:", oneBasedIndex);
+
+    this.tps.processTransaction(t);
+  };
+
+  // --- DUPLICATE SONG (deep copy) + TRANSACTION ---
+  duplicateSong = (sourceOneBasedIndex, insertOneBasedIndex) => {
+    const src = Number(sourceOneBasedIndex) - 1;
+    const ins = Number(insertOneBasedIndex) - 1;
+
+    const { currentList } = this.state;
+    if (!currentList || src < 0 || src >= currentList.songs.length) return;
+
+    const copy = { ...currentList.songs[src] }; // fields are primitives; shallow spread is a deep copy here
+    const newSongs = [
+      ...currentList.songs.slice(0, ins),
+      copy,
+      ...currentList.songs.slice(ins),
+    ];
+    const newList = { ...currentList, songs: newSongs };
+    this.setStateWithUpdatedList(newList);
+  };
+
+  addDuplicateSongTransaction = (oneBasedIndex) => {
+    const t = new DuplicateSong_Transaction(this, oneBasedIndex);
+    this.tps.processTransaction(t);
+  };
+
+  // --- DUPLICATE PLAYLIST (deep copy) + TRANSACTION HELPERS ---
+  duplicatePlaylist = (sourceKey) => {
+    const { sessionData } = this.state;
+    const list = this.db.queryGetList(sourceKey);
+    if (!list) return null;
+
+    const newKey = sessionData.nextKey;
+    const newName = list.name + ' (Copy)';
+
+    // deep copy songs
+    const songsCopy = list.songs.map(s => ({ ...s }));
+
+    const newList = {
+      key: newKey,
+      name: newName,
+      songs: songsCopy,
+    };
+
+    // update keyNamePairs
+    const newKeyNamePairs = [...sessionData.keyNamePairs, { key: newKey, name: newName }];
+    this.sortKeyNamePairsByName(newKeyNamePairs);
+
+    const newSessionData = {
+      nextKey: sessionData.nextKey + 1,
+      counter: sessionData.counter + 1,
+      keyNamePairs: newKeyNamePairs,
+    };
+
+    this.setState(
+      (prev) => ({
+        ...prev,
+        sessionData: newSessionData
+      }),
+      () => {
+        this.db.mutationCreateList(newList);
+        this.db.mutationUpdateSessionData(this.state.sessionData);
+      }
+    );
+
+    return newKey;
+  };
+
+  deletePlaylistById = (key) => {
+    // helper used by undo of duplicate playlist
+    let newCurrentList = null;
+    if (this.state.currentList) {
+      if (this.state.currentList.key !== key) {
+        newCurrentList = this.state.currentList;
+      }
+    }
+
+    let keyIndex = this.state.sessionData.keyNamePairs.findIndex(
+      (keyNamePair) => keyNamePair.key === key
+    );
+    let newKeyNamePairs = [...this.state.sessionData.keyNamePairs];
+    if (keyIndex >= 0) newKeyNamePairs.splice(keyIndex, 1);
+
+    this.setState(
+      (prevState) => ({
+        listKeyPairMarkedForDeletion: null,
+        currentList: newCurrentList,
+        sessionData: {
+          nextKey: prevState.sessionData.nextKey,
+          counter: prevState.sessionData.counter - 1,
+          keyNamePairs: newKeyNamePairs,
+        },
+      }),
+      () => {
+        this.db.mutationDeleteList(key);
+        this.db.mutationUpdateSessionData(this.state.sessionData);
+      }
+    );
+  };
+
+  addDuplicatePlaylistTransaction = (sourceKey) => {
+    const t = new DuplicateList_Transaction(this, sourceKey);
     this.tps.processTransaction(t);
   };
 
@@ -297,17 +441,17 @@ class App extends React.Component {
     modal.classList.remove('is-visible');
   }
   openEditSongModal = (oneBasedIndex) => {
-  this.setState({ editSongIndex: Number(oneBasedIndex) }, () => {
-    const modal = document.getElementById('edit-song-modal');
-    if (modal) modal.classList.add('is-visible');
-  });
-};
+    this.setState({ editSongIndex: Number(oneBasedIndex) }, () => {
+      const modal = document.getElementById('edit-song-modal');
+      if (modal) modal.classList.add('is-visible');
+    });
+  };
 
-closeEditSongModal = () => {
-  const modal = document.getElementById('edit-song-modal');
-  if (modal) modal.classList.remove('is-visible');
-  this.setState({ editSongIndex: null });
-};
+  closeEditSongModal = () => {
+    const modal = document.getElementById('edit-song-modal');
+    if (modal) modal.classList.remove('is-visible');
+    this.setState({ editSongIndex: null });
+  };
 
   render() {
     let canAddSong = this.state.currentList !== null;
@@ -325,6 +469,7 @@ closeEditSongModal = () => {
           deleteListCallback={this.markListForDeletion}
           loadListCallback={this.loadList}
           renameListCallback={this.renameList}
+          duplicateListCallback={this.addDuplicatePlaylistTransaction}
         />
         <EditToolbar
           canAddSong={canAddSong}
@@ -340,6 +485,7 @@ closeEditSongModal = () => {
           moveSongCallback={this.addMoveSongTransaction}
           deleteSongCallback={this.addDeleteSongTransaction}
           openEditSongCallback={this.openEditSongModal}
+          duplicateSongCallback={this.addDuplicateSongTransaction}
         />
         <Statusbar currentList={this.state.currentList} />
         <DeleteListModal
@@ -348,17 +494,16 @@ closeEditSongModal = () => {
           deleteListCallback={this.deleteMarkedList}
         />
         <EditSongModal
-  song={
-    this.state.editSongIndex
-      ? this.state.currentList?.songs[this.state.editSongIndex - 1]
-      : null
-  }
-  onConfirm={(fields) =>
-    this.addEditSongTransaction(this.state.editSongIndex, fields)
-  }
-  onCancel={this.closeEditSongModal}
-/>
-
+          song={
+            this.state.editSongIndex
+              ? this.state.currentList?.songs[this.state.editSongIndex - 1]
+              : null
+          }
+          onConfirm={(fields) =>
+            this.addEditSongTransaction(this.state.editSongIndex, fields)
+          }
+          onCancel={this.closeEditSongModal}
+        />
       </div>
     );
   }

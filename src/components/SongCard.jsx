@@ -4,8 +4,8 @@ export default class SongCard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isDragSource: false,  // the card being dragged
-      isDragTarget: false   // the card currently hovered as a drop target
+      isDragSource: false,
+      isDragTarget: false
     };
   }
 
@@ -13,47 +13,44 @@ export default class SongCard extends React.Component {
     event.dataTransfer.setData("song", event.currentTarget.id);
     this.setState({ isDragSource: true });
   };
-
   handleDragOver = (event) => {
     event.preventDefault();
     if (!this.state.isDragTarget) this.setState({ isDragTarget: true });
   };
-
   handleDragEnter = (event) => {
     event.preventDefault();
     if (!this.state.isDragTarget) this.setState({ isDragTarget: true });
   };
-
   handleDragLeave = (event) => {
     event.preventDefault();
     if (this.state.isDragTarget) this.setState({ isDragTarget: false });
   };
-
   handleDrop = (event) => {
     event.preventDefault();
-
-    let targetId = event.currentTarget.id;                 // "song-card-5"
+    let targetId = event.currentTarget.id; // "song-card-5"
     targetId = targetId.substring(targetId.lastIndexOf("-") + 1);
 
-    let sourceId = event.dataTransfer.getData("song");     // "song-card-2"
+    let sourceId = event.dataTransfer.getData("song"); // "song-card-2"
     sourceId = sourceId.substring(sourceId.lastIndexOf("-") + 1);
 
-    // Reset local flags and ask parent to move
     this.setState({ isDragSource: false, isDragTarget: false });
     this.props.moveCallback(sourceId, targetId);
   };
-
-  // If drag ends without a drop on this card (e.g., escape)
   handleDragEnd = () => {
     this.setState({ isDragSource: false, isDragTarget: false });
   };
   handleDoubleClick = (e) => {
-    e.stopPropagation(); // avoid colliding with drag
+    e.stopPropagation();
     const num = Number(this.getItemNum()); // 1-based
     this.props.openEditSongCallback?.(num);
   };
 
-  getItemNum = () => this.props.id.substring("song-card-".length);
+  getItemNum = () => {
+  const id = this.props.id;
+  if (!id || !id.startsWith("song-card-")) return null;
+  return id.substring("song-card-".length);
+};
+
 
   render() {
     const { song, deleteSongCallback } = this.props;
@@ -78,27 +75,46 @@ export default class SongCard extends React.Component {
       >
         <span className="song-index">{num}.</span>
         <span className="song-main">
-        <a
+          <a
             href={song.youTubeId ? `https://www.youtube.com/watch?v=${song.youTubeId}` : "#"}
             target="_blank"
             rel="noopener noreferrer"
-            onMouseDown={(e) => e.stopPropagation()}  // don’t start drag on click
+            onMouseDown={(e) => e.stopPropagation()}
             draggable={false}
             className="song-title"
-        >
-        {song.title}
-        </a>
-            {song.year ? <span className="song-year"> ({song.year})</span> : null}
-             &nbsp;<i>by</i>&nbsp;<span className="song-artist">{song.artist}</span>
+          >
+            {song.title}
+          </a>
+          {song.year ? <span className="song-year"> ({song.year})</span> : null}
+           &nbsp;<i>by</i>&nbsp;<span className="song-artist">{song.artist}</span>
         </span>
 
         <button
+          type="button"
+          draggable={false}
           className="song-trash"
           aria-label={`Delete ${song.title}`}
-          onMouseDown={(e) => { /* avoid starting a drag */ e.stopPropagation(); }}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); deleteSongCallback?.(Number(num)); }}
         >
           🗑
+        </button>
+
+        {/* Duplicate button */}
+        <button
+          type="button"
+          draggable={false}
+          className="song-duplicate"
+          aria-label={`Duplicate ${song.title}`}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log("🗑 Clicked delete for song num:", num);
+
+            this.props.duplicateSongCallback?.(Number(num));
+          }}
+        >
+          ⎘
         </button>
       </div>
     );

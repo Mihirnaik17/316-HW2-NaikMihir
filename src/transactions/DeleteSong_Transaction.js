@@ -1,16 +1,27 @@
-import { jsTPS_Transaction } from 'jstps';
+export default class DeleteSong_Transaction {
+  constructor(app, oneBasedIndex) {
+    this.app = app;
+    this.index = Number(oneBasedIndex);
+    this.removed = null;
+  }
 
-export default class DeleteSong_Transaction extends jsTPS_Transaction {
-  constructor(app, index) {
-    super();
-    this.app = app;            // App instance
-    this.index = Number(index); // 1-based from UI
-    this.removedSong = null;   // will capture {title, artist, ...}
+  // jsTPS expects these methods:
+  executeDo() {
+    this.removed = this.app.deleteSong(this.index);
   }
+
+  executeUndo() {
+    if (this.removed) {
+      this.app.restoreSong(this.index, this.removed);
+    }
+  }
+
+  // Optional legacy support (if jsTPS uses these too)
   doTransaction() {
-    this.removedSong = this.app.deleteSong(this.index); // returns removed song object
+    this.executeDo();
   }
+
   undoTransaction() {
-    this.app.restoreSong(this.index, this.removedSong);
+    this.executeUndo();
   }
 }
